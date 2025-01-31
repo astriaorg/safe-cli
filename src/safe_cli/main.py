@@ -3,7 +3,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Annotated, List
+from typing import Annotated, List, Optional
 
 import typer
 from art import text2art
@@ -34,9 +34,15 @@ def _build_safe_operator_and_load_keys(
     node_url: str,
     private_keys: List[str],
     interactive: bool,
+    gas_price: Optional[int] = None,
+    gas_limit: Optional[int] = None,
 ) -> SafeOperator:
     safe_operator = SafeOperator(safe_address, node_url, interactive=interactive)
     safe_operator.load_cli_owners(private_keys)
+    if gas_price is not None:
+        safe_operator.gas_price = gas_price
+    if gas_limit is not None:
+        safe_operator.gas_limit = gas_limit
     return safe_operator
 
 
@@ -88,6 +94,26 @@ interactive_option = Annotated[
     ),
 ]
 
+gas_price_option = Annotated[
+    Optional[int],
+    typer.Option(
+        "--gas-price",
+        help="Gas price in wei. If specified, forces the use of legacy transactions instead of EIP-1559.",
+        rich_help_panel="Gas Options",
+        show_default=False,
+    ),
+]
+
+gas_limit_option = Annotated[
+    Optional[int],
+    typer.Option(
+        "--gas-limit",
+        help="Gas limit for the transaction. If not specified, it will be estimated.",
+        rich_help_panel="Gas Options",
+        show_default=False,
+    ),
+]
+
 
 @app.command()
 def send_ether(
@@ -114,10 +140,14 @@ def send_ether(
             show_default=False,
         ),
     ] = None,
+    gas_price: gas_price_option = None,
+    gas_limit: gas_limit_option = None,
     interactive: interactive_option = True,
 ):
     safe_operator = _build_safe_operator_and_load_keys(
-        safe_address, node_url, private_key, interactive
+        safe_address, node_url, private_key, interactive,
+        gas_price=gas_price,
+        gas_limit=gas_limit
     )
     safe_operator.send_ether(to, value, safe_nonce=safe_nonce)
 
@@ -159,10 +189,14 @@ def send_erc20(
             show_default=False,
         ),
     ] = None,
+    gas_price: gas_price_option = None,
+    gas_limit: gas_limit_option = None,
     interactive: interactive_option = True,
 ):
     safe_operator = _build_safe_operator_and_load_keys(
-        safe_address, node_url, private_key, interactive
+        safe_address, node_url, private_key, interactive,
+        gas_price=gas_price,
+        gas_limit=gas_limit
     )
     safe_operator.send_erc20(to, token_address, amount, safe_nonce=safe_nonce)
 
@@ -201,10 +235,14 @@ def send_erc721(
             show_default=False,
         ),
     ] = None,
+    gas_price: gas_price_option = None,
+    gas_limit: gas_limit_option = None,
     interactive: interactive_option = True,
 ):
     safe_operator = _build_safe_operator_and_load_keys(
-        safe_address, node_url, private_key, interactive
+        safe_address, node_url, private_key, interactive,
+        gas_price=gas_price,
+        gas_limit=gas_limit
     )
     safe_operator.send_erc721(to, token_address, token_id, safe_nonce=safe_nonce)
 
@@ -248,10 +286,14 @@ def send_custom(
             rich_help_panel="Optional Arguments",
         ),
     ] = False,
+    gas_price: gas_price_option = None,
+    gas_limit: gas_limit_option = None,
     interactive: interactive_option = True,
 ):
     safe_operator = _build_safe_operator_and_load_keys(
-        safe_address, node_url, private_key, interactive
+        safe_address, node_url, private_key, interactive,
+        gas_price=gas_price,
+        gas_limit=gas_limit
     )
     safe_operator.send_custom(
         to, value, data, safe_nonce=safe_nonce, delegate_call=delegate
@@ -284,10 +326,14 @@ def tx_builder(
             callback=check_private_keys,
         ),
     ] = None,
+    gas_price: gas_price_option = None,
+    gas_limit: gas_limit_option = None,
     interactive: interactive_option = True,
 ):
     safe_operator = _build_safe_operator_and_load_keys(
-        safe_address, node_url, private_key, interactive
+        safe_address, node_url, private_key, interactive,
+        gas_price=gas_price,
+        gas_limit=gas_limit
     )
     data = json.loads(file_path.read_text())
     safe_txs = [

@@ -151,6 +151,8 @@ class SafeOperator:
     _safe_cli_info: Optional[SafeCliInfo]
     require_all_signatures: bool
     interactive: bool
+    gas_price: Optional[int]
+    gas_limit: Optional[int]
 
     def __init__(
         self, address: ChecksumAddress, node_url: str, interactive: bool = True
@@ -186,6 +188,8 @@ class SafeOperator:
         )
         self.hw_wallet_manager = get_hw_wallet_manager()
         self.interactive = interactive  # Disable prompt dialogs
+        self.gas_price = None  # For legacy transactions
+        self.gas_limit = None  # For custom gas limit
 
     @cached_property
     def last_default_fallback_handler_address(self) -> ChecksumAddress:
@@ -948,11 +952,17 @@ class SafeOperator:
             ):
                 if self.default_sender:
                     tx_hash, tx = safe_tx.execute(
-                        self.default_sender.key, eip1559_speed=TxSpeed.NORMAL
+                        self.default_sender.key,
+                        tx_gas_price=self.gas_price,
+                        tx_gas=self.gas_limit,
+                        eip1559_speed=None if self.gas_price else TxSpeed.NORMAL
                     )
                 else:
                     tx_hash, tx = self.hw_wallet_manager.execute_safe_tx(
-                        safe_tx, eip1559_speed=TxSpeed.NORMAL
+                        safe_tx,
+                        tx_gas_price=self.gas_price,
+                        tx_gas=self.gas_limit,
+                        eip1559_speed=None if self.gas_price else TxSpeed.NORMAL
                     )
                 self.executed_transactions.append(tx_hash.hex())
                 print_formatted_text(
