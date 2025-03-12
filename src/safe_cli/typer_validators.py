@@ -10,43 +10,29 @@ from hexbytes import HexBytes
 from web3 import Web3
 
 
-def check_ethereum_address(address: str) -> ChecksumAddress:
-    """
-    Ethereum address validator
-    """
-    if not Web3.is_checksum_address(address):
+def check_ethereum_address(addr: str) -> ChecksumAddress:
+    if not Web3.is_checksum_address(addr):
         raise typer.BadParameter("Invalid ethereum address")
-    return ChecksumAddress(address)
+    return ChecksumAddress(addr)
 
 
 class ChecksumAddressParser(click.ParamType):
-    name = "ChecksumAddress"
-
-    def convert(self, value, param, ctx):
-        """
-        ChecksumAddress parser from str
-        """
+    def convert(self, value, *_):
         return ChecksumAddress(value)
 
 
-def check_private_keys(private_keys: List[str]) -> List[str]:
-    """
-    Private Keys validator
-    """
-    if private_keys is None:
+def check_private_keys(keys: List[str]) -> List[str]:
+    if keys is None:
         raise typer.BadParameter("At least one private key is required")
-    for private_key in private_keys:
+    for key in keys:
         try:
-            Account.from_key(os.environ.get(private_key, default=private_key))
+            Account.from_key(os.environ.get(key, default=key))
         except (ValueError, Error):
-            raise typer.BadParameter(f"{private_key} is not a valid private key")
-    return private_keys
+            raise typer.BadParameter(f"{key} is not a valid private key")
+    return keys
 
 
 def check_hex_str(hex_str: str) -> HexBytes:
-    """
-    HexBytes string validator
-    """
     try:
         return HexBytes(hex_str)
     except ValueError:
@@ -54,10 +40,5 @@ def check_hex_str(hex_str: str) -> HexBytes:
 
 
 class HexBytesParser(click.ParamType):
-    name = "HexBytes"
-
-    def convert(self, value, param, ctx):
-        """
-        HexBytes string parser from str
-        """
+    def convert(self, value, *_):
         return HexBytes(value)
