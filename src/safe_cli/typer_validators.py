@@ -26,18 +26,18 @@ class ChecksumAddressParser(click.ParamType):
         """
         ChecksumAddress parser from str
         """
-        return ChecksumAddress(value)
+        return check_ethereum_address(value)
 
 
 def check_private_keys(private_keys: List[str]) -> List[str]:
     """
     Private Keys validator
     """
-    if private_keys is None:
+    if not private_keys:
         raise typer.BadParameter("At least one private key is required")
     for private_key in private_keys:
         try:
-            Account.from_key(os.environ.get(private_key, default=private_key))
+            Account.from_key(os.environ.get(private_key, private_key))
         except (ValueError, Error):
             raise typer.BadParameter(f"{private_key} is not a valid private key")
     return private_keys
@@ -60,4 +60,4 @@ class HexBytesParser(click.ParamType):
         """
         HexBytes string parser from str
         """
-        return HexBytes(value)
+        return check_hex_str(value)
